@@ -330,6 +330,15 @@ export function GlobalPlayer({ onSongUpdated }) {
                 className="w-20 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer"
               />
             </div>
+
+            <button
+              onClick={() => setIsScreenLocked(true)}
+              className="p-2 text-slate-400 hover:text-white rounded-lg transition-colors"
+              title="Lock screen"
+              aria-label="Lock screen"
+            >
+              <FiLock className="text-base" />
+            </button>
           </div>
         </div>
       </div>
