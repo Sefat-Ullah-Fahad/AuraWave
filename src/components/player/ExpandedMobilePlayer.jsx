@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
 import {
   FiChevronDown,
   FiPlay,
@@ -11,13 +11,19 @@ import {
   FiList,
   FiVolume2,
   FiVolumeX,
-} from 'react-icons/fi';
-import gsap from 'gsap';
-import { usePlayer } from '../../context/PlayerContext.jsx';
-import { apiFetch } from '../../lib/api.js';
-import { useToast } from '../../context/ToastContext.jsx';
+  FiLock,
+} from "react-icons/fi";
+import gsap from "gsap";
+import { usePlayer } from "../../context/PlayerContext.jsx";
+import { apiFetch } from "../../lib/api.js";
+import { useToast } from "../../context/ToastContext.jsx";
 
-export function ExpandedMobilePlayer({ isOpen, onClose, onOpenQueue, onSongUpdated }) {
+export function ExpandedMobilePlayer({
+  isOpen,
+  onClose,
+  onOpenQueue,
+  onSongUpdated,
+}) {
   const {
     currentSong,
     isPlaying,
@@ -36,6 +42,7 @@ export function ExpandedMobilePlayer({ isOpen, onClose, onOpenQueue, onSongUpdat
     setVolume,
     isMuted,
     toggleMute,
+    setIsScreenLocked,
   } = usePlayer();
 
   const { showToast } = useToast();
@@ -47,20 +54,28 @@ export function ExpandedMobilePlayer({ isOpen, onClose, onOpenQueue, onSongUpdat
     if (!isOpen) return;
 
     // Check reduced motion preference
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
 
     if (!prefersReducedMotion && modalRef.current) {
       gsap.fromTo(
         modalRef.current,
-        { y: '100%', opacity: 0.8 },
-        { y: '0%', opacity: 1, duration: 0.35, ease: 'power3.out' }
+        { y: "100%", opacity: 0.8 },
+        { y: "0%", opacity: 1, duration: 0.35, ease: "power3.out" },
       );
 
       if (artworkRef.current) {
         gsap.fromTo(
           artworkRef.current,
           { scale: 0.9, opacity: 0.5 },
-          { scale: 1, opacity: 1, duration: 0.45, delay: 0.1, ease: 'back.out(1.2)' }
+          {
+            scale: 1,
+            opacity: 1,
+            duration: 0.45,
+            delay: 0.1,
+            ease: "back.out(1.2)",
+          },
         );
       }
     }
@@ -69,20 +84,22 @@ export function ExpandedMobilePlayer({ isOpen, onClose, onOpenQueue, onSongUpdat
   if (!isOpen || !currentSong) return null;
 
   const formatTime = (secs) => {
-    if (!secs || isNaN(secs)) return '0:00';
+    if (!secs || isNaN(secs)) return "0:00";
     const m = Math.floor(secs / 60);
     const s = Math.floor(secs % 60);
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
+    return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
   const handleToggleFavorite = async () => {
     try {
-      const res = await apiFetch(`/api/songs/${currentSong._id}/favorite`, { method: 'PATCH' });
+      const res = await apiFetch(`/api/songs/${currentSong._id}/favorite`, {
+        method: "PATCH",
+      });
       currentSong.favorite = res.favorite;
-      showToast(res.message, 'success');
+      showToast(res.message, "success");
       if (onSongUpdated) onSongUpdated();
     } catch (e) {
-      showToast('Could not update favorite status', 'error');
+      showToast("Could not update favorite status", "error");
     }
   };
 
@@ -112,13 +129,23 @@ export function ExpandedMobilePlayer({ isOpen, onClose, onOpenQueue, onSongUpdat
           </p>
         </div>
 
-        <button
-          onClick={onOpenQueue}
-          className="p-2 -mr-2 text-slate-300 hover:text-white rounded-full transition-colors active:scale-95"
-          aria-label="Open playback queue"
-        >
-          <FiList className="text-xl" />
-        </button>
+        <div className="flex items-center gap-2 -mr-2">
+          <button
+            onClick={() => setIsScreenLocked(true)}
+            className="p-2 text-slate-300 hover:text-white rounded-full transition-colors active:scale-95"
+            aria-label="Lock screen"
+            title="Lock screen"
+          >
+            <FiLock className="text-lg" />
+          </button>
+          <button
+            onClick={onOpenQueue}
+            className="p-2 text-slate-300 hover:text-white rounded-full transition-colors active:scale-95"
+            aria-label="Open playback queue"
+          >
+            <FiList className="text-xl" />
+          </button>
+        </div>
       </div>
 
       {/* Main Artwork */}
@@ -126,7 +153,7 @@ export function ExpandedMobilePlayer({ isOpen, onClose, onOpenQueue, onSongUpdat
         {/* Glow backdrop */}
         <div
           className="absolute w-64 h-64 rounded-full blur-3xl opacity-25 bg-violet-600 pointer-events-none transition-all duration-700"
-          style={{ transform: isPlaying ? 'scale(1.2)' : 'scale(0.9)' }}
+          style={{ transform: isPlaying ? "scale(1.2)" : "scale(0.9)" }}
         />
 
         <div
@@ -134,10 +161,13 @@ export function ExpandedMobilePlayer({ isOpen, onClose, onOpenQueue, onSongUpdat
           className="relative w-64 h-64 sm:w-72 sm:h-72 rounded-3xl overflow-hidden shadow-2xl shadow-violet-950/80 border border-white/10"
         >
           <img
-            src={currentSong.thumbnail || `https://i.ytimg.com/vi/${currentSong.youtubeVideoId}/hqdefault.jpg`}
+            src={
+              currentSong.thumbnail ||
+              `https://i.ytimg.com/vi/${currentSong.youtubeVideoId}/hqdefault.jpg`
+            }
             alt={currentSong.title}
             className={`w-full h-full object-cover transition-transform duration-700 ${
-              isPlaying ? 'scale-105' : 'scale-100'
+              isPlaying ? "scale-105" : "scale-100"
             }`}
           />
           {isBuffering && (
@@ -162,12 +192,16 @@ export function ExpandedMobilePlayer({ isOpen, onClose, onOpenQueue, onSongUpdat
           onClick={handleToggleFavorite}
           className={`p-2.5 rounded-full transition-transform active:scale-125 ${
             currentSong.favorite
-              ? 'text-rose-500 bg-rose-500/10'
-              : 'text-slate-400 hover:text-white bg-white/5'
+              ? "text-rose-500 bg-rose-500/10"
+              : "text-slate-400 hover:text-white bg-white/5"
           }`}
-          aria-label={currentSong.favorite ? 'Unfavorite song' : 'Favorite song'}
+          aria-label={
+            currentSong.favorite ? "Unfavorite song" : "Favorite song"
+          }
         >
-          <FiHeart className={`text-xl ${currentSong.favorite ? 'fill-rose-500' : ''}`} />
+          <FiHeart
+            className={`text-xl ${currentSong.favorite ? "fill-rose-500" : ""}`}
+          />
         </button>
       </div>
 
@@ -198,9 +232,9 @@ export function ExpandedMobilePlayer({ isOpen, onClose, onOpenQueue, onSongUpdat
         <button
           onClick={togglePlaybackMode}
           className={`p-2.5 rounded-full transition-colors ${
-            playbackMode === 'shuffle'
-              ? 'text-violet-400 bg-violet-500/20'
-              : 'text-slate-400 hover:text-slate-200'
+            playbackMode === "shuffle"
+              ? "text-violet-400 bg-violet-500/20"
+              : "text-slate-400 hover:text-slate-200"
           }`}
           aria-label={`Shuffle mode: ${playbackMode}`}
         >
@@ -220,7 +254,7 @@ export function ExpandedMobilePlayer({ isOpen, onClose, onOpenQueue, onSongUpdat
         <button
           onClick={togglePlay}
           className="w-16 h-16 rounded-full bg-gradient-to-tr from-violet-600 via-fuchsia-600 to-indigo-600 flex items-center justify-center text-white shadow-xl shadow-violet-600/40 active:scale-90 transition-all"
-          aria-label={isPlaying ? 'Pause' : 'Play'}
+          aria-label={isPlaying ? "Pause" : "Play"}
         >
           {isPlaying ? (
             <FiPause className="text-2xl fill-white" />
@@ -242,14 +276,14 @@ export function ExpandedMobilePlayer({ isOpen, onClose, onOpenQueue, onSongUpdat
         <button
           onClick={toggleRepeatMode}
           className={`p-2.5 rounded-full relative transition-colors ${
-            repeatMode !== 'off'
-              ? 'text-violet-400 bg-violet-500/20'
-              : 'text-slate-400 hover:text-slate-200'
+            repeatMode !== "off"
+              ? "text-violet-400 bg-violet-500/20"
+              : "text-slate-400 hover:text-slate-200"
           }`}
           aria-label={`Repeat mode: ${repeatMode}`}
         >
           <FiRepeat className="text-lg" />
-          {repeatMode === 'one' && (
+          {repeatMode === "one" && (
             <span className="absolute top-1 right-1 text-[9px] font-bold text-violet-300">
               1
             </span>
@@ -262,9 +296,13 @@ export function ExpandedMobilePlayer({ isOpen, onClose, onOpenQueue, onSongUpdat
         <button
           onClick={toggleMute}
           className="text-slate-400 hover:text-white transition-colors"
-          aria-label={isMuted ? 'Unmute' : 'Mute'}
+          aria-label={isMuted ? "Unmute" : "Mute"}
         >
-          {isMuted ? <FiVolumeX className="text-base" /> : <FiVolume2 className="text-base" />}
+          {isMuted ? (
+            <FiVolumeX className="text-base" />
+          ) : (
+            <FiVolume2 className="text-base" />
+          )}
         </button>
         <input
           type="range"
@@ -275,7 +313,7 @@ export function ExpandedMobilePlayer({ isOpen, onClose, onOpenQueue, onSongUpdat
           className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer"
         />
         <span className="text-[11px] font-mono text-slate-400 w-7 text-right">
-          {isMuted ? '0%' : `${volume}%`}
+          {isMuted ? "0%" : `${volume}%`}
         </span>
       </div>
     </div>

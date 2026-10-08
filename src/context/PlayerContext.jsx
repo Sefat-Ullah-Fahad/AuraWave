@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { apiFetch } from "../lib/api.js";
 import { useToast } from "./ToastContext.jsx";
+import { ScreenLockOverlay } from "../components/player/ScreenLockOverlay.jsx";
 
 const PlayerContext = createContext(null);
 
@@ -24,6 +25,7 @@ export function PlayerProvider({ children }) {
   const [playbackMode, setPlaybackMode] = useState("sequential"); // 'sequential' | 'shuffle'
   const [repeatMode, setRepeatMode] = useState("off"); // 'off' | 'one' | 'all'
   const [isExpanded, setIsExpanded] = useState(false); // Mobile expanded player modal
+  const [isScreenLocked, setIsScreenLocked] = useState(false);
 
   const { showToast } = useToast();
 
@@ -524,6 +526,8 @@ export function PlayerProvider({ children }) {
         playbackMode,
         repeatMode,
         isExpanded,
+        isScreenLocked,
+        setIsScreenLocked,
         setIsExpanded,
         playSong,
         playSongAtIndex,
@@ -550,6 +554,9 @@ export function PlayerProvider({ children }) {
       >
         <div id="aurawave-yt-iframe" />
       </div>
+      {isScreenLocked && (
+        <ScreenLockOverlay onUnlock={() => setIsScreenLocked(false)} />
+      )}
     </PlayerContext.Provider>
   );
 }

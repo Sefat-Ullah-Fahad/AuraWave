@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   FiPlay,
   FiPause,
@@ -11,12 +11,13 @@ import {
   FiList,
   FiHeart,
   FiMaximize2,
-} from 'react-icons/fi';
-import { usePlayer } from '../../context/PlayerContext.jsx';
-import { ExpandedMobilePlayer } from './ExpandedMobilePlayer.jsx';
-import { QueueModal } from './QueueModal.jsx';
-import { apiFetch } from '../../lib/api.js';
-import { useToast } from '../../context/ToastContext.jsx';
+  FiLock,
+} from "react-icons/fi";
+import { usePlayer } from "../../context/PlayerContext.jsx";
+import { ExpandedMobilePlayer } from "./ExpandedMobilePlayer.jsx";
+import { QueueModal } from "./QueueModal.jsx";
+import { apiFetch } from "../../lib/api.js";
+import { useToast } from "../../context/ToastContext.jsx";
 
 export function GlobalPlayer({ onSongUpdated }) {
   const {
@@ -40,6 +41,7 @@ export function GlobalPlayer({ onSongUpdated }) {
     queue,
     isExpanded,
     setIsExpanded,
+    setIsScreenLocked,
   } = usePlayer();
 
   const [isQueueOpen, setIsQueueOpen] = useState(false);
@@ -48,21 +50,23 @@ export function GlobalPlayer({ onSongUpdated }) {
   if (!currentSong) return null;
 
   const formatTime = (secs) => {
-    if (!secs || isNaN(secs)) return '0:00';
+    if (!secs || isNaN(secs)) return "0:00";
     const m = Math.floor(secs / 60);
     const s = Math.floor(secs % 60);
-    return `${m}:${s < 10 ? '0' : ''}${s}`;
+    return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
   const handleToggleFavorite = async (e) => {
     e.stopPropagation();
     try {
-      const res = await apiFetch(`/api/songs/${currentSong._id}/favorite`, { method: 'PATCH' });
+      const res = await apiFetch(`/api/songs/${currentSong._id}/favorite`, {
+        method: "PATCH",
+      });
       currentSong.favorite = res.favorite;
-      showToast(res.message, 'success');
+      showToast(res.message, "success");
       if (onSongUpdated) onSongUpdated();
     } catch (e) {
-      showToast('Could not update favorite status', 'error');
+      showToast("Could not update favorite status", "error");
     }
   };
 
@@ -87,7 +91,10 @@ export function GlobalPlayer({ onSongUpdated }) {
           {/* Song Thumbnail */}
           <div className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 bg-slate-900 border border-white/10">
             <img
-              src={currentSong.thumbnail || `https://i.ytimg.com/vi/${currentSong.youtubeVideoId}/hqdefault.jpg`}
+              src={
+                currentSong.thumbnail ||
+                `https://i.ytimg.com/vi/${currentSong.youtubeVideoId}/hqdefault.jpg`
+              }
               alt={currentSong.title}
               className="w-full h-full object-cover"
             />
@@ -102,12 +109,28 @@ export function GlobalPlayer({ onSongUpdated }) {
 
           {/* Song Details */}
           <div className="flex-1 min-w-0 pr-1">
-            <h4 className="text-xs font-semibold text-white truncate">{currentSong.title}</h4>
-            <p className="text-[11px] text-slate-400 truncate">{currentSong.channelName}</p>
+            <h4 className="text-xs font-semibold text-white truncate">
+              {currentSong.title}
+            </h4>
+            <p className="text-[11px] text-slate-400 truncate">
+              {currentSong.channelName}
+            </p>
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="flex items-center gap-1 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setIsScreenLocked(true)}
+              className="p-2 text-slate-400 hover:text-white transition-colors"
+              aria-label="Lock screen"
+              title="Lock screen"
+            >
+              <FiLock className="text-base" />
+            </button>
+
             <button
               onClick={handleToggleFavorite}
               className="p-2 text-slate-400 hover:text-rose-400 transition-colors"
@@ -115,7 +138,7 @@ export function GlobalPlayer({ onSongUpdated }) {
             >
               <FiHeart
                 className={`text-base ${
-                  currentSong.favorite ? 'text-rose-500 fill-rose-500' : ''
+                  currentSong.favorite ? "text-rose-500 fill-rose-500" : ""
                 }`}
               />
             </button>
@@ -123,7 +146,7 @@ export function GlobalPlayer({ onSongUpdated }) {
             <button
               onClick={togglePlay}
               className="w-9 h-9 rounded-full bg-violet-600 hover:bg-violet-500 text-white flex items-center justify-center shadow-md active:scale-90 transition-transform"
-              aria-label={isPlaying ? 'Pause' : 'Play'}
+              aria-label={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? (
                 <FiPause className="text-sm fill-white" />
@@ -151,15 +174,23 @@ export function GlobalPlayer({ onSongUpdated }) {
           {/* Left: Song Info */}
           <div className="flex items-center gap-3.5 w-1/4 min-w-[220px]">
             <img
-              src={currentSong.thumbnail || `https://i.ytimg.com/vi/${currentSong.youtubeVideoId}/hqdefault.jpg`}
+              src={
+                currentSong.thumbnail ||
+                `https://i.ytimg.com/vi/${currentSong.youtubeVideoId}/hqdefault.jpg`
+              }
               alt={currentSong.title}
               className="w-13 h-13 rounded-xl object-cover bg-slate-800 border border-white/10 shadow-md shrink-0"
             />
             <div className="min-w-0 flex-1">
-              <h4 className="text-xs sm:text-sm font-semibold text-white truncate" title={currentSong.title}>
+              <h4
+                className="text-xs sm:text-sm font-semibold text-white truncate"
+                title={currentSong.title}
+              >
                 {currentSong.title}
               </h4>
-              <p className="text-xs text-slate-400 truncate">{currentSong.channelName}</p>
+              <p className="text-xs text-slate-400 truncate">
+                {currentSong.channelName}
+              </p>
             </div>
             <button
               onClick={handleToggleFavorite}
@@ -168,7 +199,7 @@ export function GlobalPlayer({ onSongUpdated }) {
             >
               <FiHeart
                 className={`text-base ${
-                  currentSong.favorite ? 'text-rose-500 fill-rose-500' : ''
+                  currentSong.favorite ? "text-rose-500 fill-rose-500" : ""
                 }`}
               />
             </button>
@@ -181,9 +212,9 @@ export function GlobalPlayer({ onSongUpdated }) {
               <button
                 onClick={togglePlaybackMode}
                 className={`p-1.5 rounded-lg transition-colors ${
-                  playbackMode === 'shuffle'
-                    ? 'text-violet-400 bg-violet-500/20'
-                    : 'text-slate-400 hover:text-slate-200'
+                  playbackMode === "shuffle"
+                    ? "text-violet-400 bg-violet-500/20"
+                    : "text-slate-400 hover:text-slate-200"
                 }`}
                 title={`Shuffle: ${playbackMode}`}
                 aria-label={`Shuffle: ${playbackMode}`}
@@ -203,7 +234,7 @@ export function GlobalPlayer({ onSongUpdated }) {
               <button
                 onClick={togglePlay}
                 className="w-9 h-9 rounded-full bg-violet-600 hover:bg-violet-500 text-white flex items-center justify-center shadow-lg shadow-violet-600/30 active:scale-95 transition-all"
-                aria-label={isPlaying ? 'Pause' : 'Play'}
+                aria-label={isPlaying ? "Pause" : "Play"}
               >
                 {isPlaying ? (
                   <FiPause className="text-base fill-white" />
@@ -224,15 +255,15 @@ export function GlobalPlayer({ onSongUpdated }) {
               <button
                 onClick={toggleRepeatMode}
                 className={`p-1.5 rounded-lg relative transition-colors ${
-                  repeatMode !== 'off'
-                    ? 'text-violet-400 bg-violet-500/20'
-                    : 'text-slate-400 hover:text-slate-200'
+                  repeatMode !== "off"
+                    ? "text-violet-400 bg-violet-500/20"
+                    : "text-slate-400 hover:text-slate-200"
                 }`}
                 title={`Repeat: ${repeatMode}`}
                 aria-label={`Repeat mode: ${repeatMode}`}
               >
                 <FiRepeat className="text-sm" />
-                {repeatMode === 'one' && (
+                {repeatMode === "one" && (
                   <span className="absolute -top-1 -right-1 text-[8px] font-bold text-violet-300 bg-violet-950 rounded-full px-1">
                     1
                   </span>
@@ -282,9 +313,13 @@ export function GlobalPlayer({ onSongUpdated }) {
               <button
                 onClick={toggleMute}
                 className="text-slate-400 hover:text-white transition-colors"
-                aria-label={isMuted ? 'Unmute' : 'Mute'}
+                aria-label={isMuted ? "Unmute" : "Mute"}
               >
-                {isMuted ? <FiVolumeX className="text-base" /> : <FiVolume2 className="text-base" />}
+                {isMuted ? (
+                  <FiVolumeX className="text-base" />
+                ) : (
+                  <FiVolume2 className="text-base" />
+                )}
               </button>
               <input
                 type="range"
