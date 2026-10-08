@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
+}
+
+/* Audio progress range slider styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]:focus {
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 9999px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.8);
+  margin-top: -4px;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.25);
+  background: #a78bfa;
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: rgba(18, 20, 29, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-dropdown {
+  background: rgba(22, 24, 38, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Music audio wave bar animation */
+@keyframes eq-bounce {
+  0%, 100% { height: 4px; }
+  50% { height: 18px; }
+}
+
+.eq-bar-1 { animation: eq-bounce 0.8s ease-in-out infinite; }
+.eq-bar-2 { animation: eq-bounce 0.6s ease-in-out infinite 0.15s; }
+.eq-bar-3 { animation: eq-bounce 1.1s ease-in-out infinite 0.3s; }
+.eq-bar-4 { animation: eq-bounce 0.7s ease-in-out infinite 0.2s; }
+
+/* Safe padding bottom for mobile bottom nav and mini player */
+.pb-mobile-player {
+  padding-bottom: calc(148px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 1024px) {
+  .pb-mobile-player {
+    padding-bottom: 96px;
+  }
+}
+

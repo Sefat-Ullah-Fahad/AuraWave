@@ -1,0 +1,18 @@
+{
+  "name": "AuraWave Personal Music Player",
+  "short_name": "AuraWave",
+  "description": "Your private, isolated personal music collection powered by YouTube audio streams and custom playlists.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090a10",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["music", "entertainment", "audio"]
+}

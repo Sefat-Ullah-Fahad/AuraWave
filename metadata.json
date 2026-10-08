@@ -1,0 +1,8 @@
+{
+  "name": "AuraWave - Personal Music Player",
+  "description": "Production-ready personal YouTube music player with isolated user libraries, playlists, queue, audio controls, and mobile-first experience.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
