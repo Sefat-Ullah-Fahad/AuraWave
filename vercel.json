@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:group/:path*",
+      "destination": "/api/:group?__path=:path*"
+    }
+  ]
+}
