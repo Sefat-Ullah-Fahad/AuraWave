@@ -24,7 +24,7 @@ export async function connectMongo(uri) {
   if (mongoClient) {
     try {
       await mongoClient.close();
-    } catch (e) {}
+    } catch (e) { }
   }
 
   console.log('Connecting directly to MongoDB Atlas...');
@@ -35,7 +35,7 @@ export async function connectMongo(uri) {
   });
 
   await mongoClient.connect();
-  
+
   // Test ping
   await mongoClient.db().admin().ping();
 
@@ -47,7 +47,7 @@ export async function connectMongo(uri) {
     if (pathname && !pathname.includes('?')) {
       targetDbName = pathname;
     }
-  } catch (e) {}
+  } catch (e) { }
 
   mongoDb = mongoClient.db(targetDbName);
   isConnected = true;
@@ -108,6 +108,10 @@ export async function updateMongoUri(newUri) {
  * Startup connection from environment
  */
 export async function connectDB() {
+  if (isConnected && mongoDb) {
+    return;
+  }
+
   const uri = process.env.MONGODB_URI;
   if (uri && uri.trim() && !uri.includes('cluster0.mongodb.net/aurawave?retryWrites=true')) {
     try {
