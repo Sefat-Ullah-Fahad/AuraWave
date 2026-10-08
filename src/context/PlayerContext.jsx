@@ -1,6 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { apiFetch } from '../lib/api.js';
-import { useToast } from './ToastContext.jsx';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
+import { apiFetch } from "../lib/api.js";
+import { useToast } from "./ToastContext.jsx";
 
 const PlayerContext = createContext(null);
 
@@ -14,8 +21,8 @@ export function PlayerProvider({ children }) {
   const [duration, setDuration] = useState(0);
   const [volume, setVolumeState] = useState(80);
   const [isMuted, setIsMuted] = useState(false);
-  const [playbackMode, setPlaybackMode] = useState('sequential'); // 'sequential' | 'shuffle'
-  const [repeatMode, setRepeatMode] = useState('off'); // 'off' | 'one' | 'all'
+  const [playbackMode, setPlaybackMode] = useState("sequential"); // 'sequential' | 'shuffle'
+  const [repeatMode, setRepeatMode] = useState("off"); // 'off' | 'one' | 'all'
   const [isExpanded, setIsExpanded] = useState(false); // Mobile expanded player modal
 
   const { showToast } = useToast();
@@ -24,10 +31,11 @@ export function PlayerProvider({ children }) {
   const isApiReadyRef = useRef(false);
   const timerRef = useRef(null);
   const lastRecordedSongIdRef = useRef(null);
+  const mediaSessionActionsRef = useRef({});
 
   // Initialize YouTube IFrame API script
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     if (window.YT && window.YT.Player) {
       isApiReadyRef.current = true;
@@ -36,9 +44,9 @@ export function PlayerProvider({ children }) {
     }
 
     // Load official script
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    const firstScriptTag = document.getElementsByTagName('script')[0];
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName("script")[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
     window.onYouTubeIframeAPIReady = () => {
@@ -56,9 +64,9 @@ export function PlayerProvider({ children }) {
     if (!window.YT || !window.YT.Player || playerRef.current) return;
 
     try {
-      playerRef.current = new window.YT.Player('aurawave-yt-iframe', {
-        height: '100%',
-        width: '100%',
+      playerRef.current = new window.YT.Player("aurawave-yt-iframe", {
+        height: "100%",
+        width: "100%",
         playerVars: {
           autoplay: 1,
           controls: 0,
@@ -79,7 +87,7 @@ export function PlayerProvider({ children }) {
         },
       });
     } catch (e) {
-      console.warn('YT player init error:', e);
+      console.warn("YT player init error:", e);
     }
   };
 
@@ -87,7 +95,10 @@ export function PlayerProvider({ children }) {
   const startProgressTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
-      if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
+      if (
+        playerRef.current &&
+        typeof playerRef.current.getCurrentTime === "function"
+      ) {
         const cur = playerRef.current.getCurrentTime() || 0;
         const dur = playerRef.current.getDuration() || 0;
         setCurrentTime(cur);
@@ -113,8 +124,8 @@ export function PlayerProvider({ children }) {
       // Record playback to user history (once per song play)
       if (currentSong && lastRecordedSongIdRef.current !== currentSong._id) {
         lastRecordedSongIdRef.current = currentSong._id;
-        apiFetch('/api/history', {
-          method: 'POST',
+        apiFetch("/api/history", {
+          method: "POST",
           body: JSON.stringify({ songId: currentSong._id }),
         }).catch(() => {});
       }
@@ -140,8 +151,11 @@ export function PlayerProvider({ children }) {
   const handlePlayerError = (event) => {
     setIsBuffering(false);
     setIsPlaying(false);
-    console.warn('YouTube Player Error Code:', event.data);
-    showToast('YouTube video could not be played. Skipping to next song.', 'error');
+    console.warn("YouTube Player Error Code:", event.data);
+    showToast(
+      "YouTube video could not be played. Skipping to next song.",
+      "error",
+    );
     setTimeout(() => {
       nextSong();
     }, 1200);
@@ -149,7 +163,7 @@ export function PlayerProvider({ children }) {
 
   // Auto-play logic when song finishes
   const handleSongEnded = () => {
-    if (repeatMode === 'one') {
+    if (repeatMode === "one") {
       if (playerRef.current?.seekTo) {
         playerRef.current.seekTo(0);
         playerRef.current.playVideo();
@@ -161,45 +175,97 @@ export function PlayerProvider({ children }) {
     if (queue.length > 0) {
       if (currentIndex < queue.length - 1) {
         playSongAtIndex(currentIndex + 1);
-      } else if (repeatMode === 'all') {
+      } else if (repeatMode === "all") {
         playSongAtIndex(0);
       } else {
         // Queue finished
         setIsPlaying(false);
-        showToast('Queue completed.', 'info');
+        showToast("Queue completed.", "info");
       }
     }
   };
 
-  // MediaSession API integration for mobile background / lock-screen controls
+  // Media Session metadata and lock-screen controls
   useEffect(() => {
-    if (typeof window === 'undefined' || !('mediaSession' in navigator) || !currentSong) return;
+    if (typeof window === "undefined" || !("mediaSession" in navigator)) return;
 
-    try {
-      navigator.mediaSession.metadata = new window.MediaMetadata({
-        title: currentSong.title,
-        artist: currentSong.channelName || 'YouTube Music',
-        album: 'AuraWave Personal Player',
-        artwork: [
-          {
-            src: currentSong.thumbnail || `https://i.ytimg.com/vi/${currentSong.youtubeVideoId}/hqdefault.jpg`,
-            sizes: '512x512',
-            type: 'image/jpeg',
-          },
-        ],
-      });
-
-      navigator.mediaSession.setActionHandler('play', () => togglePlay());
-      navigator.mediaSession.setActionHandler('pause', () => togglePlay());
-      navigator.mediaSession.setActionHandler('previoustrack', () => prevSong());
-      navigator.mediaSession.setActionHandler('nexttrack', () => nextSong());
-      navigator.mediaSession.setActionHandler('seekto', (details) => {
-        if (details.seekTime !== undefined) seekTo(details.seekTime);
-      });
-    } catch (e) {
-      // Ignore unsupported browsers
+    const mediaSession = navigator.mediaSession;
+    if (!currentSong) {
+      mediaSession.metadata = null;
+      mediaSession.playbackState = "none";
+      return;
     }
-  }, [currentSong, queue, currentIndex]);
+
+    mediaSession.metadata = new window.MediaMetadata({
+      title: currentSong.title,
+      artist: currentSong.channelName || "YouTube Music",
+      album: "AuraWave Personal Player",
+      artwork: [
+        {
+          src:
+            currentSong.thumbnail ||
+            `https://i.ytimg.com/vi/${currentSong.youtubeVideoId}/hqdefault.jpg`,
+          sizes: "512x512",
+          type: "image/jpeg",
+        },
+      ],
+    });
+
+    const handlers = {
+      play: () => mediaSessionActionsRef.current.play?.(),
+      pause: () => mediaSessionActionsRef.current.pause?.(),
+      previoustrack: () => mediaSessionActionsRef.current.prevSong?.(),
+      nexttrack: () => mediaSessionActionsRef.current.nextSong?.(),
+      seekto: (details) => {
+        if (details.seekTime !== undefined)
+          mediaSessionActionsRef.current.seekTo?.(details.seekTime);
+      },
+      seekbackward: (details) =>
+        mediaSessionActionsRef.current.seekBy?.(-(details.seekOffset || 10)),
+      seekforward: (details) =>
+        mediaSessionActionsRef.current.seekBy?.(details.seekOffset || 10),
+    };
+
+    for (const [action, handler] of Object.entries(handlers)) {
+      try {
+        mediaSession.setActionHandler(action, handler);
+      } catch {}
+    }
+
+    return () => {
+      for (const action of Object.keys(handlers)) {
+        try {
+          mediaSession.setActionHandler(action, null);
+        } catch {}
+      }
+    };
+  }, [currentSong]);
+
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator))
+      return;
+
+    const mediaSession = navigator.mediaSession;
+    mediaSession.playbackState = currentSong
+      ? isPlaying
+        ? "playing"
+        : "paused"
+      : "none";
+
+    if (
+      currentSong &&
+      duration > 0 &&
+      typeof mediaSession.setPositionState === "function"
+    ) {
+      try {
+        mediaSession.setPositionState({
+          duration,
+          playbackRate: 1,
+          position: Math.min(currentTime, duration),
+        });
+      } catch {}
+    }
+  }, [currentSong, currentTime, duration, isPlaying]);
 
   // Load a video into the player
   const loadVideo = (videoId) => {
@@ -214,7 +280,7 @@ export function PlayerProvider({ children }) {
       setIsPlaying(true);
       setCurrentTime(0);
     } catch (err) {
-      console.warn('Error loading video by ID:', err);
+      console.warn("Error loading video by ID:", err);
     }
   };
 
@@ -224,11 +290,11 @@ export function PlayerProvider({ children }) {
 
     if (newQueue) {
       setQueue(newQueue);
-      const idx = newQueue.findIndex(s => s._id === song._id);
+      const idx = newQueue.findIndex((s) => s._id === song._id);
       setCurrentIndex(idx !== -1 ? idx : 0);
     } else {
       // If not in current queue, append
-      const existingIdx = queue.findIndex(s => s._id === song._id);
+      const existingIdx = queue.findIndex((s) => s._id === song._id);
       if (existingIdx !== -1) {
         setCurrentIndex(existingIdx);
       } else {
@@ -271,7 +337,7 @@ export function PlayerProvider({ children }) {
   const nextSong = () => {
     if (queue.length === 0) return;
 
-    if (playbackMode === 'shuffle' && queue.length > 1) {
+    if (playbackMode === "shuffle" && queue.length > 1) {
       // Pick random index different from current
       let randIdx = Math.floor(Math.random() * queue.length);
       if (randIdx === currentIndex) {
@@ -283,10 +349,10 @@ export function PlayerProvider({ children }) {
 
     if (currentIndex < queue.length - 1) {
       playSongAtIndex(currentIndex + 1);
-    } else if (repeatMode === 'all') {
+    } else if (repeatMode === "all") {
       playSongAtIndex(0);
     } else {
-      showToast('End of queue reached.', 'info');
+      showToast("End of queue reached.", "info");
     }
   };
 
@@ -316,6 +382,23 @@ export function PlayerProvider({ children }) {
     }
   };
 
+  mediaSessionActionsRef.current = {
+    play: () => {
+      if (!playerRef.current) return;
+      if (!currentSong && queue.length > 0) {
+        playSongAtIndex(0);
+      } else {
+        playerRef.current.playVideo?.();
+      }
+    },
+    pause: () => playerRef.current?.pauseVideo?.(),
+    nextSong,
+    prevSong,
+    seekTo,
+    seekBy: (offset) =>
+      seekTo(Math.max(0, Math.min(duration, currentTime + offset))),
+  };
+
   // Volume
   const setVolume = (val) => {
     const clamped = Math.max(0, Math.min(100, val));
@@ -341,23 +424,23 @@ export function PlayerProvider({ children }) {
   // Add song to queue
   const addToQueue = (song) => {
     if (!song) return;
-    setQueue(prev => {
-      const exists = prev.some(s => s._id === song._id);
+    setQueue((prev) => {
+      const exists = prev.some((s) => s._id === song._id);
       if (exists) {
-        showToast('Song is already in queue.', 'info');
+        showToast("Song is already in queue.", "info");
         return prev;
       }
-      showToast('Added to queue.', 'success');
+      showToast("Added to queue.", "success");
       return [...prev, song];
     });
   };
 
   // Remove from queue
   const removeFromQueue = (indexToRemove) => {
-    setQueue(prev => {
+    setQueue((prev) => {
       const updated = prev.filter((_, idx) => idx !== indexToRemove);
       if (indexToRemove < currentIndex) {
-        setCurrentIndex(c => c - 1);
+        setCurrentIndex((c) => c - 1);
       } else if (indexToRemove === currentIndex) {
         if (updated.length > 0) {
           const nextIdx = Math.min(indexToRemove, updated.length - 1);
@@ -372,7 +455,7 @@ export function PlayerProvider({ children }) {
       }
       return updated;
     });
-    showToast('Removed from queue.', 'info');
+    showToast("Removed from queue.", "info");
   };
 
   // Clear queue
@@ -384,14 +467,14 @@ export function PlayerProvider({ children }) {
     if (playerRef.current?.stopVideo) {
       playerRef.current.stopVideo();
     }
-    showToast('Queue cleared.', 'info');
+    showToast("Queue cleared.", "info");
   };
 
   // Reorder queue
   const reorderQueue = (newQueue) => {
     setQueue(newQueue);
     if (currentSong) {
-      const newIdx = newQueue.findIndex(s => s._id === currentSong._id);
+      const newIdx = newQueue.findIndex((s) => s._id === currentSong._id);
       if (newIdx !== -1) {
         setCurrentIndex(newIdx);
       }
@@ -400,21 +483,30 @@ export function PlayerProvider({ children }) {
 
   // Cycle playback mode: sequential -> shuffle
   const togglePlaybackMode = () => {
-    const nextMode = playbackMode === 'sequential' ? 'shuffle' : 'sequential';
+    const nextMode = playbackMode === "sequential" ? "shuffle" : "sequential";
     setPlaybackMode(nextMode);
-    showToast(nextMode === 'shuffle' ? 'Shuffle mode enabled' : 'Sequential mode enabled', 'info');
+    showToast(
+      nextMode === "shuffle"
+        ? "Shuffle mode enabled"
+        : "Sequential mode enabled",
+      "info",
+    );
   };
 
   // Cycle repeat mode: off -> one -> all
   const toggleRepeatMode = () => {
     let next;
-    if (repeatMode === 'off') next = 'all';
-    else if (repeatMode === 'all') next = 'one';
-    else next = 'off';
+    if (repeatMode === "off") next = "all";
+    else if (repeatMode === "all") next = "one";
+    else next = "off";
 
     setRepeatMode(next);
-    const labels = { off: 'Repeat off', one: 'Repeat current song', all: 'Repeat queue' };
-    showToast(labels[next], 'info');
+    const labels = {
+      off: "Repeat off",
+      one: "Repeat current song",
+      all: "Repeat queue",
+    };
+    showToast(labels[next], "info");
   };
 
   return (
@@ -465,7 +557,7 @@ export function PlayerProvider({ children }) {
 export function usePlayer() {
   const context = useContext(PlayerContext);
   if (!context) {
-    throw new Error('usePlayer must be used within PlayerProvider');
+    throw new Error("usePlayer must be used within PlayerProvider");
   }
   return context;
 }
