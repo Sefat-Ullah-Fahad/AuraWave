@@ -10,7 +10,11 @@ export default async function handler(req, res) {
         const requestUrl = new URL(req.url || '/', 'http://localhost');
         const nestedPath = requestUrl.searchParams.get('__path');
         if (nestedPath) {
-            requestUrl.pathname = `${requestUrl.pathname.replace(/\/$/, '')}/${nestedPath}`;
+            const currentPath = requestUrl.pathname.replace(/\/$/, '');
+            const nestedSuffix = `/${nestedPath.replace(/^\/+/, '')}`;
+            if (!currentPath.endsWith(nestedSuffix)) {
+                requestUrl.pathname = `${currentPath}${nestedSuffix}`;
+            }
             requestUrl.searchParams.delete('__path');
             req.url = `${requestUrl.pathname}${requestUrl.search}`;
         }
